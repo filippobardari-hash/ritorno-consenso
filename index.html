@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-agnLVyePhrdwN840h/Cq9gzhczRYKTgLXd5Mh3vnvOk='; style-src 'sha256-+ZZeO82uL/4P38cLRNglOC9xwQAu5EFwaKV2jqkv8Ig='; img-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Rinnovo del permesso di lettura</title>
+<style>
+body { margin: 0; padding: 24px 16px; font-family: system-ui, sans-serif; font-size: 18px; line-height: 1.5; color: #1b1b1b; background: #f6f6f4; }
+main { max-width: 32rem; margin: 0 auto; }
+h1 { font-size: 1.4rem; margin: 0 0 16px; }
+p { margin: 0 0 14px; }
+[hidden] { display: none !important; }
+.pulsante { display: block; margin: 20px 0; padding: 16px; text-align: center; font-weight: bold; color: #fff; background: #0a6cc4; border-radius: 10px; text-decoration: none; }
+.testo { padding: 12px; font-family: ui-monospace, monospace; font-size: 1rem; background: #fff; border: 1px solid #bbb; border-radius: 8px; word-break: break-all; user-select: all; }
+.sicurezza { margin-top: 28px; padding-top: 14px; font-size: 0.95rem; color: #444; border-top: 1px solid #ccc; }
+</style>
+</head>
+<body>
+<main>
+<h1>Rinnovo del permesso di lettura</h1>
+
+<section id="ok" hidden>
+<p>Hai approvato il rinnovo in banca. Manca un ultimo passaggio.</p>
+<a id="conferma" class="pulsante" rel="noreferrer">Conferma su Telegram</a>
+<p>Tocca il pulsante: si apre Telegram, poi tocca Avvia.</p>
+</section>
+
+<section id="incolla" hidden>
+<p>Copia questo testo e incollalo nella chat del bot delle conferme.</p>
+<p id="testo-da-incollare" class="testo"></p>
+</section>
+
+<section id="fallito" hidden>
+<p>Il rinnovo non è andato a buon fine: non serve fare niente, ti riscrive il bot.</p>
+</section>
+
+<section id="non-valido" hidden>
+<p>Questo collegamento non è valido: non inserire niente e chiudi la pagina.</p>
+</section>
+
+<p class="sicurezza">Questa pagina non ti chiede mai password o codici.</p>
+</main>
+<script>
+"use strict";
+(function () {
+  var parametri = new URLSearchParams(location.search);
+  history.replaceState(null, "", location.pathname);
+
+  var RE_STATO = /^([A-Za-z][A-Za-z0-9_]{3,30}[Bb][Oo][Tt])\.([A-Za-z0-9_-]{22})$/;
+  var RE_CODE = /^[A-Za-z0-9_-]{1,64}$/;
+  var MASSIMO_START = 64;
+  var MASSIMO_CODE_MOSTRATO = 512;
+
+  function mostra(id) {
+    document.getElementById(id).hidden = false;
+  }
+
+  var stato = RE_STATO.exec(parametri.get("state") || "");
+  if (stato === null) {
+    mostra("non-valido");
+    return;
+  }
+  var bot = stato[1];
+  var s = stato[2];
+  var code = parametri.get("code") || "";
+
+  if (code === "" || code.length > MASSIMO_CODE_MOSTRATO) {
+    mostra("fallito");
+    return;
+  }
+  if (RE_CODE.test(code) && s.length + code.length <= MASSIMO_START) {
+    document.getElementById("conferma").href = "https://t.me/" + bot + "?start=" + s + code;
+    mostra("ok");
+    return;
+  }
+  document.getElementById("testo-da-incollare").textContent = "/start " + s + " " + code;
+  mostra("incolla");
+})();
+</script>
+</body>
+</html>
